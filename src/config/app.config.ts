@@ -49,6 +49,22 @@ class EnvironmentVariablesValidator {
   APP_HEADER_LANGUAGE: string;
 }
 
+/**
+ * Registers the application configuration using the `registerAs` function.
+ * Validates the environment variables using `validateConfig` and `EnvironmentVariablesValidator`.
+ * 
+ * @returns {AppConfig} The application configuration object.
+ * 
+ * @property {string} nodeEnv - The Node.js environment (default: 'development').
+ * @property {string} name - The application name (default: 'Telemedicine Platform').
+ * @property {string} workingDirectory - The working directory of the application.
+ * @property {string} frontendDomain - The frontend domain of the application.
+ * @property {string} backendDomain - The backend domain of the application (default: 'http://localhost').
+ * @property {number} port - The port on which the application runs (default: 3000).
+ * @property {string} apiPrefix - The API prefix (default: 'api').
+ * @property {string} fallbackLanguage - The fallback language for the application (default: 'en').
+ * @property {string} headerLanguage - The header language key (default: 'x-custom-lang').
+ */
 export default registerAs<AppConfig>('app', () => {
   validateConfig(process.env, EnvironmentVariablesValidator);
 
