@@ -1,0 +1,53 @@
+# This Docker Compose file sets up a telemedicine platform with three services:
+# 1. mongo: A MongoDB database service.
+#    - Uses the mongo:8.0.0 image.
+#    - Always restarts on failure.
+#    - Initializes with root username and password from environment variables.
+#    - Stores data in a Docker volume named telemedicine-mongo-db.
+#    - Exposes the MongoDB service on the port specified by the DATABASE_PORT environment variable.
+#
+# 2. mongo-express: A web-based MongoDB admin interface.
+#    - Uses the mongo-express image.
+#    - Always restarts on failure.
+#    - Exposes the admin interface on port 8081.
+#    - Uses basic authentication with credentials from environment variables.
+#    - Connects to the MongoDB service using the URL constructed from environment variables.
+#
+# 3. api: The main API service for the telemedicine platform.
+#    - Builds the Docker image from the specified Dockerfile (document.Dockerfile) in the current context.
+#    - Exposes the API service on the port specified by the APP_PORT environment variable.
+#
+# Additionally, a Docker volume named telemedicine-mongo-db is defined to persist MongoDB data.
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:8.0.0
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DATABASE_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+    volumes:
+      - telemedicine-mongo-db:/data/db
+    ports:
+      - ${DATABASE_PORT}:27017
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_BASICAUTH_USERNAME: ${DATABASE_USERNAME}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${DATABASE_PASSWORD}
+      ME_CONFIG_MONGODB_URL: mongodb://${DATABASE_USERNAME}:${DATABASE_PASSWORD}@mongo:${DATABASE_PORT}/
+
+  api:
+    build:
+      context: .
+      dockerfile: document.Dockerfile
+    ports:
+      - ${APP_PORT}:${APP_PORT}
+
+volumes:
+  telemedicine-mongo-db:
