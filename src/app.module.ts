@@ -17,7 +17,7 @@ import { MongooseConfigService } from './database/mongoose-config.service';
     MongooseModule.forRootAsync({
       useClass: MongooseConfigService,
     }),
-],
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

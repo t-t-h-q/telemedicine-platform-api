@@ -52,9 +52,9 @@ class EnvironmentVariablesValidator {
 /**
  * Registers the application configuration using the `registerAs` function.
  * Validates the environment variables using `validateConfig` and `EnvironmentVariablesValidator`.
- * 
+ *
  * @returns {AppConfig} The application configuration object.
- * 
+ *
  * @property {string} nodeEnv - The Node.js environment (default: 'development').
  * @property {string} name - The application name (default: 'Telemedicine Platform').
  * @property {string} workingDirectory - The working directory of the application.

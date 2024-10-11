@@ -1,6 +1,6 @@
 /**
  * Represents the configuration settings for the application.
- * 
+ *
  * @property {string} nodeEnv - The environment in which the application is running (e.g., development, production).
  * @property {string} name - The name of the application.
  * @property {string} workingDirectory - The working directory of the application.
