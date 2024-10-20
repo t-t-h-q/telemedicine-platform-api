@@ -5,6 +5,6 @@ set -e
 # pnpm run seed:run:document
 pnpm run start:prod > prod.log 2>&1 &
 /opt/wait-for-it.sh maildev:1080
-/opt/wait-for-it.sh localhost:3000 -t 60
+# /opt/wait-for-it.sh localhost:3000      // will be fixed later
 pnpm run lint
 pnpm run test:e2e -- --runInBand
