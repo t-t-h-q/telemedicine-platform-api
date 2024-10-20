@@ -26,82 +26,12 @@ export class UsersService {
    * @returns {Promise<User>} - A promise that resolves to the created user.
    *
    * @throws {UnprocessableEntityException} - If the email already exists, the role does not exist, or the status does not exist.
-   *
-   * The function performs the following steps:
-   * 1. Hashes the password if provided.
-   * 2. Checks if the email already exists in the repository.
-   * 3. Validates the role and status against predefined enums.
-   * 4. Creates and returns the new user with the provided and validated details.
    */
   async create(createUserDto: CreateUserDto): Promise<User> {
-    // <creating-property />
-
-    let password: string | undefined = undefined;
-
-    if (createUserDto.password) {
-      const salt = await bcrypt.genSalt();
-      password = await bcrypt.hash(createUserDto.password, salt);
-    }
-
-    let email: string | null = null;
-
-    if (createUserDto.email) {
-      const userObject = await this.usersRepository.findByEmail(
-        createUserDto.email,
-      );
-      if (userObject) {
-        throw new UnprocessableEntityException({
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            email: 'emailAlreadyExists',
-          },
-        });
-      }
-      email = createUserDto.email;
-    }
-
-    let role: Role | undefined = undefined;
-
-    if (createUserDto.role?.id) {
-      const roleObject = Object.values(RoleEnum)
-        .map(String)
-        .includes(String(createUserDto.role.id));
-      if (!roleObject) {
-        throw new UnprocessableEntityException({
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            role: 'roleNotExists',
-          },
-        });
-      }
-
-      role = {
-        id: createUserDto.role.id,
-      };
-    }
-
-    let status: Status | undefined = undefined;
-
-    if (createUserDto.status?.id) {
-      const statusObject = Object.values(StatusEnum)
-        .map(String)
-        .includes(String(createUserDto.status.id));
-      if (!statusObject) {
-        throw new UnprocessableEntityException({
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            status: 'statusNotExists',
-          },
-        });
-      }
-
-      status = {
-        id: createUserDto.status.id,
-      };
-    }
+    const { email, password, role, status } =
+      await this.validateAndPrepareUserData(createUserDto);
 
     return this.usersRepository.create({
-      // <creating-property-payload />
       firstName: createUserDto.firstName,
       lastName: createUserDto.lastName,
       email: email,
@@ -145,82 +75,10 @@ export class UsersService {
     id: User['id'],
     updateUserDto: UpdateUserDto,
   ): Promise<User | null> {
-    // <updating-property />
-
-    let password: string | undefined = undefined;
-
-    if (updateUserDto.password) {
-      const userObject = await this.usersRepository.findById(id);
-
-      if (userObject && userObject?.password !== updateUserDto.password) {
-        const salt = await bcrypt.genSalt();
-        password = await bcrypt.hash(updateUserDto.password, salt);
-      }
-    }
-
-    let email: string | null | undefined = undefined;
-
-    if (updateUserDto.email) {
-      const userObject = await this.usersRepository.findByEmail(
-        updateUserDto.email,
-      );
-
-      if (userObject && userObject.id !== id) {
-        throw new UnprocessableEntityException({
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            email: 'emailAlreadyExists',
-          },
-        });
-      }
-
-      email = updateUserDto.email;
-    } else if (updateUserDto.email === null) {
-      email = null;
-    }
-
-    let role: Role | undefined = undefined;
-
-    if (updateUserDto.role?.id) {
-      const roleObject = Object.values(RoleEnum)
-        .map(String)
-        .includes(String(updateUserDto.role.id));
-      if (!roleObject) {
-        throw new UnprocessableEntityException({
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            role: 'roleNotExists',
-          },
-        });
-      }
-
-      role = {
-        id: updateUserDto.role.id,
-      };
-    }
-
-    let status: Status | undefined = undefined;
-
-    if (updateUserDto.status?.id) {
-      const statusObject = Object.values(StatusEnum)
-        .map(String)
-        .includes(String(updateUserDto.status.id));
-      if (!statusObject) {
-        throw new UnprocessableEntityException({
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            status: 'statusNotExists',
-          },
-        });
-      }
-
-      status = {
-        id: updateUserDto.status.id,
-      };
-    }
+    const { email, password, role, status } =
+      await this.validateAndPrepareUserData(updateUserDto, id);
 
     return this.usersRepository.update(id, {
-      // <updating-property-payload />
       firstName: updateUserDto.firstName,
       lastName: updateUserDto.lastName,
       email,
@@ -240,5 +98,102 @@ export class UsersService {
    */
   async remove(id: User['id']): Promise<void> {
     await this.usersRepository.remove(id);
+  }
+
+  /**
+   * Validates and prepares user data for creation or updating.
+   * This method handles common logic for both create and update operations,
+   * such as password hashing, email uniqueness checks, and role/status validation.
+   *
+   * @param userData - The user data to validate and prepare.
+   * @param userId - Optional ID of the user being updated. Used for email uniqueness check.
+   * @returns An object containing the validated and prepared user data.
+   * @throws {UnprocessableEntityException} If validation fails.
+   */
+  private async validateAndPrepareUserData(
+    userData: CreateUserDto | UpdateUserDto,
+    userId?: User['id'],
+  ): Promise<{
+    email: string | null | undefined;
+    password?: string;
+    role?: Role;
+    status?: Status;
+  }> {
+    let password: string | undefined = undefined;
+    if (userData.password) {
+      const salt = await bcrypt.genSalt();
+      password = await bcrypt.hash(userData.password, salt);
+    }
+
+    let email: string | null | undefined = undefined;
+    if (userData.email) {
+      const existingUser = await this.usersRepository.findByEmail(
+        userData.email,
+      );
+      if (
+        existingUser &&
+        (userId === undefined || existingUser.id !== userId)
+      ) {
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            email: 'emailAlreadyExists',
+          },
+        });
+      }
+      email = userData.email;
+    } else if (userData.email === null) {
+      email = null;
+    }
+
+    let role: Role | undefined = undefined;
+    if (userData.role?.id) {
+      role = this.validateRole(userData.role.id);
+    }
+
+    let status: Status | undefined = undefined;
+    if (userData.status?.id) {
+      status = this.validateStatus(userData.status.id);
+    }
+
+    return { email, password, role, status };
+  }
+
+  /**
+   * Validates a role ID against the RoleEnum.
+   *
+   * @param roleId - The role ID to validate.
+   * @returns The role object if valid.
+   * @throws {UnprocessableEntityException} If the role ID is invalid.
+   */
+  private validateRole(roleId: number | string): Role {
+    if (!Object.values(RoleEnum).includes(roleId)) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          role: 'roleNotExists',
+        },
+      });
+    }
+    return { id: roleId };
+  }
+
+  /**
+   * Validates a status ID against the StatusEnum.
+   *
+   * @param statusId - The status ID to validate.
+   * @returns The status object if valid.
+   * @throws {UnprocessableEntityException} If the status ID is invalid.
+   */
+  private validateStatus(statusId: number | string): Status {
+    if (!Object.values(StatusEnum).includes(statusId)) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          status: 'statusNotExists',
+        },
+      });
+    }
+    return { id: statusId };
   }
 }
