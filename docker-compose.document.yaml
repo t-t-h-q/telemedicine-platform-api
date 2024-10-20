@@ -1,19 +1,24 @@
 # This Docker Compose file sets up a telemedicine platform with three services:
-# 1. mongo: A MongoDB database service.
+# 1. maildev: A simple web-based interface for viewing and testing emails during development.
+#    - Builds the MailDev image using the specified Dockerfile in the current context.
+#    - Maps the MailDev web interface to the port specified by the MAIL_CLIENT_PORT environment variable.
+#    - Maps the SMTP server to the port specified by the MAIL_PORT environment variable.
+#
+# 2. mongo: A MongoDB database service.
 #    - Uses the mongo:8.0.0 image.
 #    - Always restarts on failure.
 #    - Initializes with root username and password from environment variables.
 #    - Stores data in a Docker volume named telemedicine-mongo-db.
 #    - Exposes the MongoDB service on the port specified by the DATABASE_PORT environment variable.
 #
-# 2. mongo-express: A web-based MongoDB admin interface.
+# 3. mongo-express: A web-based MongoDB admin interface.
 #    - Uses the mongo-express image.
 #    - Always restarts on failure.
 #    - Exposes the admin interface on port 8081.
 #    - Uses basic authentication with credentials from environment variables.
 #    - Connects to the MongoDB service using the URL constructed from environment variables.
 #
-# 3. api: The main API service for the telemedicine platform.
+# 4. api: The main API service for the telemedicine platform.
 #    - Builds the Docker image from the specified Dockerfile (document.Dockerfile) in the current context.
 #    - Exposes the API service on the port specified by the APP_PORT environment variable.
 #
@@ -21,8 +26,16 @@
 version: '3.8'
 
 services:
+  maildev:
+    build:
+      context: .
+      dockerfile: maildev.Dockerfile
+    ports:
+      - ${MAIL_CLIENT_PORT}:1080
+      - ${MAIL_PORT}:1025
+
   mongo:
-    image: mongo:8.0.0
+    image: mongo:8.0.1
     restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${DATABASE_USERNAME}

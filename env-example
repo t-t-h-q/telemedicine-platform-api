@@ -1,3 +1,34 @@
+# This is an example environment configuration file for the Telemedicine Platform API.
+# It contains various environment variables required for the application to run properly.
+#
+# Variables:
+# NODE_ENV: The environment in which the application is running (e.g., development, production).
+# APP_PORT: The port on which the application will listen.
+# APP_NAME: The name of the application.
+# API_PREFIX: The prefix for the API routes.
+# APP_FALLBACK_LANGUAGE: The default language for the application.
+# APP_HEADER_LANGUAGE: The custom header for language settings.
+# FRONTEND_DOMAIN: The domain for the frontend application.
+# BACKEND_DOMAIN: The domain for the backend application.
+#
+# Database Configuration:
+# DATABASE_TYPE: The type of database being used (e.g., mongodb).
+# DATABASE_PORT: The port on which the database is running.
+# DATABASE_USERNAME: The username for the database connection.
+# DATABASE_PASSWORD: The password for the database connection.
+# DATABASE_NAME: The name of the database.
+# DATABASE_URL: The URL for the database connection.
+#
+# Authentication Configuration:
+# AUTH_JWT_SECRET: The secret key for signing JWT tokens.
+# AUTH_JWT_TOKEN_EXPIRES_IN: The expiration time for JWT tokens.
+# AUTH_REFRESH_SECRET: The secret key for signing refresh tokens.
+# AUTH_REFRESH_TOKEN_EXPIRES_IN: The expiration time for refresh tokens.
+# AUTH_FORGOT_SECRET: The secret key for signing forgot password tokens.
+# AUTH_FORGOT_TOKEN_EXPIRES_IN: The expiration time for forgot password tokens.
+# AUTH_CONFIRM_EMAIL_SECRET: The secret key for signing email confirmation tokens.
+# AUTH_CONFIRM_EMAIL_TOKEN_EXPIRES_IN: The expiration time for email confirmation tokens.
+
 NODE_ENV=development
 APP_PORT=3000
 APP_NAME="Telemedicine Platform API"
@@ -13,5 +44,26 @@ DATABASE_USERNAME=root
 DATABASE_PASSWORD=secret
 DATABASE_NAME=api
 DATABASE_URL=mongodb://mongo:27017
+
+MAIL_HOST=maildev
+MAIL_PORT=1025
+MAIL_USER=
+MAIL_PASSWORD=
+MAIL_IGNORE_TLS=true
+MAIL_SECURE=false
+MAIL_REQUIRE_TLS=false
+MAIL_DEFAULT_EMAIL=noreply@example.com
+MAIL_DEFAULT_NAME=Api
+MAIL_CLIENT_PORT=1080
+
+AUTH_JWT_SECRET=secret
+AUTH_JWT_TOKEN_EXPIRES_IN=15m
+AUTH_REFRESH_SECRET=secret_for_refresh
+AUTH_REFRESH_TOKEN_EXPIRES_IN=3650d
+AUTH_FORGOT_SECRET=secret_for_forgot
+AUTH_FORGOT_TOKEN_EXPIRES_IN=30m
+AUTH_CONFIRM_EMAIL_SECRET=secret_for_confirm_email
+AUTH_CONFIRM_EMAIL_TOKEN_EXPIRES_IN=1d
+
 
 
