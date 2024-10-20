@@ -59,52 +59,9 @@ export class AuthService {
       });
     }
 
-    if (!user.password) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          password: 'incorrectPassword',
-        },
-      });
-    }
+    await this.validatePassword(user, loginDto.password);
 
-    const isValidPassword = await bcrypt.compare(
-      loginDto.password,
-      user.password,
-    );
-
-    if (!isValidPassword) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          password: 'incorrectPassword',
-        },
-      });
-    }
-
-    const hash = crypto
-      .createHash('sha256')
-      .update(randomStringGenerator())
-      .digest('hex');
-
-    const session = await this.sessionService.create({
-      user,
-      hash,
-    });
-
-    const { token, refreshToken, tokenExpires } = await this.getTokensData({
-      id: user.id,
-      role: user.role,
-      sessionId: session.id,
-      hash,
-    });
-
-    return {
-      refreshToken,
-      token,
-      tokenExpires,
-      user,
-    };
+    return this.generateAndReturnLoginResponse(user);
   }
 
   async register(dto: AuthRegisterLoginDto): Promise<void> {
@@ -119,25 +76,7 @@ export class AuthService {
       },
     });
 
-    const hash = await this.jwtService.signAsync(
-      {
-        confirmEmailUserId: user.id,
-      },
-      {
-        secret: this.configService.getOrThrow(
-          'auth.confirmEmailSecret' as keyof AllConfigType,
-          {
-            infer: true,
-          },
-        ),
-        expiresIn: this.configService.getOrThrow(
-          'auth.confirmEmailExpires' as keyof AllConfigType,
-          {
-            infer: true,
-          },
-        ),
-      },
-    );
+    const hash = await this.generateConfirmEmailHash(user.id);
 
     await this.mailService.userSignUp({
       to: dto.email,
@@ -151,18 +90,7 @@ export class AuthService {
     let userId: User['id'];
 
     try {
-      const jwtData = await this.jwtService.verifyAsync<{
-        confirmEmailUserId: User['id'];
-      }>(hash, {
-        secret: this.configService.getOrThrow(
-          'auth.confirmEmailSecret' as keyof AllConfigType,
-          {
-            infer: true,
-          },
-        ),
-      });
-
-      userId = jwtData.confirmEmailUserId;
+      userId = await this.verifyConfirmEmailHash(hash);
     } catch {
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
@@ -174,10 +102,7 @@ export class AuthService {
 
     const user = await this.usersService.findById(userId);
 
-    if (
-      !user ||
-      user?.status?.id?.toString() !== StatusEnum.inactive.toString()
-    ) {
+    if (user?.status?.id?.toString() !== StatusEnum.inactive.toString()) {
       throw new NotFoundException({
         status: HttpStatus.NOT_FOUND,
         error: `notFound`,
@@ -211,42 +136,11 @@ export class AuthService {
     }
 
     if (userDto.password) {
-      if (!userDto.oldPassword) {
-        throw new UnprocessableEntityException({
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            oldPassword: 'missingOldPassword',
-          },
-        });
-      }
-
-      if (!currentUser.password) {
-        throw new UnprocessableEntityException({
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            oldPassword: 'incorrectOldPassword',
-          },
-        });
-      }
-
-      const isValidOldPassword = await bcrypt.compare(
-        userDto.oldPassword,
-        currentUser.password,
-      );
-
-      if (!isValidOldPassword) {
-        throw new UnprocessableEntityException({
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            oldPassword: 'incorrectOldPassword',
-          },
-        });
-      } else {
-        await this.sessionService.deleteByUserIdWithExclude({
-          userId: currentUser.id,
-          excludeSessionId: userJwtPayload.sessionId,
-        });
-      }
+      await this.validateOldPassword(currentUser, userDto.oldPassword);
+      await this.sessionService.deleteByUserIdWithExclude({
+        userId: currentUser.id,
+        excludeSessionId: userJwtPayload.sessionId,
+      });
     }
 
     delete userDto.oldPassword;
@@ -261,43 +155,11 @@ export class AuthService {
   ): Promise<Omit<LoginResponseDto, 'user'>> {
     const session = await this.sessionService.findById(data.sessionId);
 
-    if (!session) {
+    if (!session || session.hash !== data.hash) {
       throw new UnauthorizedException();
     }
 
-    if (session.hash !== data.hash) {
-      throw new UnauthorizedException();
-    }
-
-    const hash = crypto
-      .createHash('sha256')
-      .update(randomStringGenerator())
-      .digest('hex');
-
-    const user = await this.usersService.findById(session.user.id);
-
-    if (!user?.role) {
-      throw new UnauthorizedException();
-    }
-
-    await this.sessionService.update(session.id, {
-      hash,
-    });
-
-    const { token, refreshToken, tokenExpires } = await this.getTokensData({
-      id: session.user.id,
-      role: {
-        id: user.role.id,
-      },
-      sessionId: session.id,
-      hash,
-    });
-
-    return {
-      token,
-      refreshToken,
-      tokenExpires,
-    };
+    return this.generateAndReturnLoginResponse(session.user, session);
   }
 
   async delete(user: User): Promise<void> {
@@ -306,6 +168,110 @@ export class AuthService {
 
   async logout(data: Pick<JwtRefreshPayloadType, 'sessionId'>): Promise<void> {
     await this.sessionService.deleteById(data.sessionId);
+  }
+
+  private async generateAndReturnLoginResponse(
+    user: User,
+    session?: Session,
+  ): Promise<LoginResponseDto> {
+    const newSession = session ?? (await this.createNewSession(user));
+    const { token, refreshToken, tokenExpires } = await this.getTokensData({
+      id: user.id,
+      role: user.role,
+      sessionId: newSession.id,
+      hash: newSession.hash,
+    });
+
+    return {
+      refreshToken,
+      token,
+      tokenExpires,
+      user,
+    };
+  }
+
+  private async createNewSession(user: User): Promise<Session> {
+    const hash = crypto
+      .createHash('sha256')
+      .update(randomStringGenerator())
+      .digest('hex');
+
+    return this.sessionService.create({
+      user,
+      hash,
+    });
+  }
+
+  private async validatePassword(user: User, password?: string) {
+    if (!user.password) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          password: 'incorrectPassword',
+        },
+      });
+    }
+
+    const isValidPassword = await bcrypt.compare(password, user.password);
+
+    if (!isValidPassword) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          password: 'incorrectPassword',
+        },
+      });
+    }
+  }
+
+  private async validateOldPassword(user: User, oldPassword?: string) {
+    if (!oldPassword) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          oldPassword: 'missingOldPassword',
+        },
+      });
+    }
+
+    await this.validatePassword(user, oldPassword);
+  }
+
+  private async generateConfirmEmailHash(userId: User['id']): Promise<string> {
+    return this.jwtService.signAsync(
+      {
+        confirmEmailUserId: userId,
+      },
+      {
+        secret: this.configService.getOrThrow(
+          'auth.confirmEmailSecret' as keyof AllConfigType,
+          {
+            infer: true,
+          },
+        ),
+        expiresIn: this.configService.getOrThrow(
+          'auth.confirmEmailExpires' as keyof AllConfigType,
+          {
+            infer: true,
+          },
+        ),
+      },
+    );
+  }
+
+  private async verifyConfirmEmailHash(hash: string): Promise<User['id']> {
+    const jwtData = await this.jwtService.verifyAsync<{
+      confirmEmailUserId: User['id'];
+    }>(hash, {
+      secret: this.configService.getOrThrow(
+        'auth.confirmEmailSecret' as keyof AllConfigType,
+        {
+          infer: true,
+        },
+      ),
+    });
+
+    return jwtData.confirmEmailUserId;
   }
 
   private async getTokensData(data: {
