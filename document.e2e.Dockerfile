@@ -3,7 +3,7 @@ FROM node:20.17.0-alpine
 RUN apk add --no-cache bash
 RUN npm i -g pnpm @nestjs/cli typescript ts-node
 
-COPY package*.json /tmp/app/
+COPY package*.json pnpm-lock.yaml /tmp/app/
 RUN cd /tmp/app && pnpm install
 
 COPY . /usr/src/app
