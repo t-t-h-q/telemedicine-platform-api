@@ -119,21 +119,25 @@ export class UsersService {
     role?: Role;
     status?: Status;
   }> {
-    let password: string | undefined = undefined;
-    if (userData.password) {
-      const salt = await bcrypt.genSalt();
-      password = await bcrypt.hash(userData.password, salt);
+    const { email, password, role, status } = userData;
+
+    // Hash the password if provided and different from the existing one
+    let hashedPassword: string | undefined = undefined;
+    if (password) {
+      const hasNewPassword = userId
+        ? (await this.usersRepository.findById(userId))?.password !== password
+        : true;
+      if (hasNewPassword) {
+        const salt = await bcrypt.genSalt();
+        hashedPassword = await bcrypt.hash(password, salt);
+      }
     }
 
-    let email: string | null | undefined = undefined;
-    if (userData.email) {
-      const existingUser = await this.usersRepository.findByEmail(
-        userData.email,
-      );
-      if (
-        existingUser &&
-        (userId === undefined || existingUser.id !== userId)
-      ) {
+    // Check email uniqueness
+    let validatedEmail: string | null | undefined = undefined;
+    if (email) {
+      const existingUser = await this.usersRepository.findByEmail(email);
+      if (existingUser && existingUser.id !== userId) {
         throw new UnprocessableEntityException({
           status: HttpStatus.UNPROCESSABLE_ENTITY,
           errors: {
@@ -141,22 +145,29 @@ export class UsersService {
           },
         });
       }
-      email = userData.email;
-    } else if (userData.email === null) {
-      email = null;
+      validatedEmail = email;
+    } else if (email === null) {
+      validatedEmail = null;
     }
 
-    let role: Role | undefined = undefined;
-    if (userData.role?.id) {
-      role = this.validateRole(userData.role.id);
+    // Validate role
+    let validatedRole: Role | undefined = undefined;
+    if (role?.id) {
+      validatedRole = this.validateRole(Number(role.id));
     }
 
-    let status: Status | undefined = undefined;
-    if (userData.status?.id) {
-      status = this.validateStatus(userData.status.id);
+    // Validate status
+    let validatedStatus: Status | undefined = undefined;
+    if (status?.id) {
+      validatedStatus = this.validateStatus(Number(status.id));
     }
 
-    return { email, password, role, status };
+    return {
+      email: validatedEmail,
+      password: hashedPassword,
+      role: validatedRole,
+      status: validatedStatus,
+    };
   }
 
   /**
@@ -166,7 +177,7 @@ export class UsersService {
    * @returns The role object if valid.
    * @throws {UnprocessableEntityException} If the role ID is invalid.
    */
-  private validateRole(roleId: number | string): Role {
+  private validateRole(roleId: number): Role {
     if (!Object.values(RoleEnum).includes(roleId)) {
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
@@ -185,7 +196,7 @@ export class UsersService {
    * @returns The status object if valid.
    * @throws {UnprocessableEntityException} If the status ID is invalid.
    */
-  private validateStatus(statusId: number | string): Status {
+  private validateStatus(statusId: number): Status {
     if (!Object.values(StatusEnum).includes(statusId)) {
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
