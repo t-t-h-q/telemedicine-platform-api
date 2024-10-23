@@ -59,7 +59,7 @@ export class AuthService {
       });
     }
 
-    await this.validatePassword(user, loginDto.password);
+    await this.validatePassword(user.password, loginDto.password);
 
     return this.generateAndReturnLoginResponse(user);
   }
@@ -136,7 +136,7 @@ export class AuthService {
     }
 
     if (userDto.password) {
-      await this.validateOldPassword(currentUser, userDto.oldPassword);
+      await this.validateOldPassword(currentUser.password, userDto.oldPassword);
       await this.sessionService.deleteByUserIdWithExclude({
         userId: currentUser.id,
         excludeSessionId: userJwtPayload.sessionId,
@@ -202,17 +202,17 @@ export class AuthService {
     });
   }
 
-  private async validatePassword(user: User, password?: string) {
-    if (!user.password) {
+  private async validatePassword(currentPassword: string, password?: string) {
+    if (!password || !currentPassword) {
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
-          password: 'incorrectPassword',
+          password: 'missingPassword',
         },
       });
     }
 
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    const isValidPassword = await bcrypt.compare(password, currentPassword);
 
     if (!isValidPassword) {
       throw new UnprocessableEntityException({
@@ -224,7 +224,10 @@ export class AuthService {
     }
   }
 
-  private async validateOldPassword(user: User, oldPassword?: string) {
+  private async validateOldPassword(
+    currentPassword: string,
+    oldPassword?: string,
+  ) {
     if (!oldPassword) {
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
@@ -234,7 +237,7 @@ export class AuthService {
       });
     }
 
-    await this.validatePassword(user, oldPassword);
+    await this.validatePassword(currentPassword, oldPassword);
   }
 
   private async generateConfirmEmailHash(userId: User['id']): Promise<string> {
