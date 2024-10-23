@@ -156,7 +156,7 @@ export class AuthService {
     const session = await this.sessionService.findById(data.sessionId);
 
     if (!session || session.hash !== data.hash) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Session not found or hash mismatch');
     }
 
     return this.generateAndReturnLoginResponse(session.user, session);

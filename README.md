@@ -34,8 +34,11 @@
 ### Local Installation
 
 1. **clone the repository**:
-  git clone <https://github.com/t-t-h-q/telemedicine-platform-api.git>
-  cd repo
+
+    ```bash
+    git clone https://github.com/t-t-h-q/telemedicine-platform-api.git
+    cd repo
+    ```
 
 2. **Install dependencies**:
   pnpm install
