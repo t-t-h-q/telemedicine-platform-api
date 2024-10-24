@@ -19,6 +19,7 @@
 ## Features
 
 - [Feature 1: RESTful API for users]
+- [Feature 2: Auth]
 
 ## System Requirements
 
@@ -32,22 +33,33 @@
 
 ### Local Installation
 
-1. **Clone the repository**:
+1. **clone the repository**:
 
-  ```bash
-  git clone https://github.com/user/repo.git
-  cd repo
+    ```bash
+    git clone https://github.com/t-t-h-q/telemedicine-platform-api.git
+    cd repo
+    ```
 
 2. **Install dependencies**:
   pnpm install
 
 3. **Configure environment variables**:
-Copy the .env.example file to .env and configure the necessary values:
+  Copy the .env.example file to .env and configure the necessary values:
   cp .env.example .env
 
-4. **Start MongoDB using Docker (if MongoDB is not installed locally)**:
-  docker-compose up mongo
+4. **Change env config**:
+  Change DATABASE_URL=mongodb://mongo:27017 to DATABASE_URL=mongodb://localhost:27017
+  Change MAIL_HOST=maildev to MAIL_HOST=localhost
+  
+5. **Generate secret keys for access token and refresh token**
 
-4. **Run the project**:
+    ```console
+    node -e "console.log('\nAUTH_JWT_SECRET=' + require('crypto').randomBytes(256).toString('base64') + '\n\nAUTH_REFRESH_SECRET=' + require('crypto').randomBytes(256).toString('base64') + '\n\nAUTH_FORGOT_SECRET=' + require('crypto').randomBytes(256).toString('base64') + '\n\nAUTH_CONFIRM_EMAIL_SECRET=' + require('crypto').randomBytes(256).toString('base64'));"
+    ```
+
+6. **Start MongoDB using Docker (if MongoDB is not installed locally)**:
+  docker compose -f docker-compose.document.yaml up -d mongo mongo-express maildev
+
+7. **Run the project**:
   pnpm run start:dev
-
+  Open <http://localhost:3000>
