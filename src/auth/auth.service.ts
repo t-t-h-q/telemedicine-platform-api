@@ -69,7 +69,7 @@ export class AuthService {
       ...dto,
       email: dto.email,
       role: {
-        id: RoleEnum.user,
+        name: RoleEnum.user,
       },
       status: {
         id: StatusEnum.inactive,

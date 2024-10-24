@@ -18,7 +18,7 @@ export class UserMapper {
 
     if (raw.role) {
       domainEntity.role = new Role();
-      domainEntity.role.id = raw.role._id;
+      domainEntity.role.name = raw.role.name;
     }
 
     if (raw.status) {
@@ -38,7 +38,7 @@ export class UserMapper {
 
     if (domainEntity.role) {
       role = new RoleSchema();
-      role._id = domainEntity.role.id.toString();
+      role.name = domainEntity.role.name;
     }
 
     let status: StatusSchema | undefined = undefined;

@@ -152,8 +152,8 @@ export class UsersService {
 
     // Validate role
     let validatedRole: Role | undefined = undefined;
-    if (role?.id) {
-      validatedRole = this.validateRole(Number(role.id));
+    if (role?.name) {
+      validatedRole = this.validateRole(role.name);
     }
 
     // Validate status
@@ -177,8 +177,8 @@ export class UsersService {
    * @returns The role object if valid.
    * @throws {UnprocessableEntityException} If the role ID is invalid.
    */
-  private validateRole(roleId: number): Role {
-    if (!Object.values(RoleEnum).includes(roleId)) {
+  private validateRole(roleName: string): Role {
+    if (!Object.values(RoleEnum).includes(roleName as RoleEnum)) {
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
@@ -186,7 +186,7 @@ export class UsersService {
         },
       });
     }
-    return { id: roleId };
+    return { name: roleName };
   }
 
   /**

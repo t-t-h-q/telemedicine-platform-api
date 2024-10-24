@@ -5,13 +5,7 @@ export class Role {
   @Allow()
   @ApiProperty({
     type: String,
+    example: 'user',
   })
-  id: number | string;
-
-  @Allow()
-  @ApiProperty({
-    type: String,
-    example: 'admin',
-  })
-  name?: string;
+  name: string;
 }
