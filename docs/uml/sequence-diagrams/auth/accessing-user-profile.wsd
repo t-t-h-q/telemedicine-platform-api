@@ -1,0 +1,13 @@
+@startuml AccessingUserProfileSequenceDiagram
+participant "Client Application" as Client
+participant "Authorization Server" as AuthServer
+
+== Access User Profile ==
+Client -> AuthServer: GET /api/v1/auth/me\nRequest User Profile
+
+alt accessToken is Valid
+    AuthServer -> Client: 200 OK\nProvide User Profile
+else accessToken is Invalid
+    AuthServer -> Client: 401 Unauthorized
+end
+@enduml

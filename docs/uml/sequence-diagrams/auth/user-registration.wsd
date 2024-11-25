@@ -1,0 +1,23 @@
+@startuml UserRegistrationSequenceDiagram
+actor User
+participant "Client Application" as Client
+participant "Authorization Server" as AuthServer
+
+== User Registration ==
+User -> Client: Initiate Registration
+Client -> AuthServer: POST /api/v1/auth/email/register\nSubmit Registration Details
+alt Registration Successful
+    AuthServer -> Client: 204 No Content\nUser Registered Successfully
+    AuthServer -> User: Send Confirmation Email with Link
+else Registration Failed
+    AuthServer -> Client: 422 Unprocessable Entity\nRegistration Error
+end
+
+== Email Confirmation ==
+User -> AuthServer: POST /api/v1/auth/email/confirm\nClick Confirmation Link
+alt Confirmation Successful
+    AuthServer -> Client: 204 No Content\nEmail Confirmed
+else Confirmation Failed
+    AuthServer -> Client: 422 Unprocessable Entity\nConfirmation Error
+end
+@enduml

@@ -64,7 +64,7 @@ export class AuthService {
     return this.generateAndReturnLoginResponse(user);
   }
 
-  async register(dto: AuthRegisterLoginDto): Promise<void> {
+  async register(dto: AuthRegisterLoginDto): Promise<User> {
     const user = await this.usersService.create({
       ...dto,
       email: dto.email,
@@ -84,6 +84,8 @@ export class AuthService {
         hash,
       },
     });
+
+    return user;
   }
 
   async confirmEmail(hash: string): Promise<void> {

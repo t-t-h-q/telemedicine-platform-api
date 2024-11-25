@@ -1,0 +1,10 @@
+@startuml LogoutSequenceDiagram
+actor User
+participant "Client Application" as Client
+participant "Authorization Server" as AuthServer
+
+== User Logout ==
+User -> Client: Initiate Logout
+Client -> AuthServer: POST /api/v1/auth/logout\nRevoke Tokens
+AuthServer -> Client: 200 OK\nLogout Successful
+@enduml

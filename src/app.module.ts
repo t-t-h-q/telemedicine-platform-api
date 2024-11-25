@@ -5,6 +5,7 @@ import { MailModule } from './mail/mail.module';
 import { MailerModule } from './mailer/mailer.module';
 import { SessionModule } from './session/session.module';
 import { UsersModule } from './users/users.module';
+import { DoctorsModule } from './doctors/doctors.module';
 import appConfig from './config/app.config';
 import databaseConfig from './database/config/database.config';
 import authConfig from './auth/config/auth.config';
@@ -27,6 +28,7 @@ import { MongooseConfigService } from './database/mongoose-config.service';
     SessionModule,
     MailModule,
     MailerModule,
+    DoctorsModule,
   ],
 })
 export class AppModule {}

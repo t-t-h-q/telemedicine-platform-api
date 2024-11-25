@@ -1,0 +1,13 @@
+@startuml TokenExpiryAndRefreshSequenceDiagram
+participant "Client Application" as Client
+participant "Authorization Server" as AuthServer
+
+== Token Refresh ==
+Client -> AuthServer: POST /api/v1/auth/refresh\nRequest New accessToken with refreshToken
+
+alt refreshToken is Valid
+    AuthServer -> Client: 200 OK\nIssue New accessToken
+else refreshToken is Invalid
+    AuthServer -> Client: 401 Unauthorized
+end
+@enduml

@@ -1,0 +1,66 @@
+@startuml OptimizedTelemedicineSystem
+
+class User {
+  <<id>> _id: string
+  active: boolean
+  name: string {required}
+  email: string {required, unique}
+  phone: string {unique}
+  social_media_id: string
+  verified: boolean
+  role: 'patient' | 'doctor' | 'admin' {required}
+  created_at: Date
+  updated_at: Date
+}
+
+class Doctor {
+  <<id>> _id: string
+  user_id: string <<FK>>
+  professional_documents: string[]
+  approved: boolean
+  specialties: string[]
+  languages: string[]
+  location: Location
+  availability: Availability[]
+  created_at: Date
+  updated_at: Date
+}
+
+class Patient {
+  <<id>> _id: string
+  user_id: string <<FK>>
+  age: number
+  gender: string
+  address: Address
+  contact_emergency: EmergencyContact
+  medical_conditions: string[]
+  allergies: string[]
+  preferences: Preferences
+  insurance: boolean
+  insurance_document: string[]
+  created_at: Date
+  updated_at: Date
+}
+
+class Availability {
+  day_of_week: string
+  time_slots: TimeSlot[]
+}
+
+class TimeSlot {
+  start_time: string
+  end_time: string
+}
+
+class Location {
+  city: Address
+  state: string
+}
+
+
+User <|-- Doctor
+User <|-- Patient
+Doctor --> Location : location
+Doctor --> Availability : availability
+Availability --> TimeSlot : time_slots
+@enduml

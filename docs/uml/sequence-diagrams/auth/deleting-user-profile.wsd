@@ -1,0 +1,10 @@
+@startuml DeletingUserSequenceDiagram
+actor User
+participant "Client Application" as Client
+participant "Authorization Server" as AuthServer
+
+== Update User Profile ==
+User -> Client: Update Profile Info
+Client -> AuthServer: PATCH /api/v1/auth/me\nUpdate User Profile
+AuthServer -> Client: 200 OK\nProfile Updated
+@enduml

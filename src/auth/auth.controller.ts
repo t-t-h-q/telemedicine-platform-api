@@ -12,7 +12,12 @@ import {
   SerializeOptions,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
 import { AuthConfirmEmailDto } from './dto/auth-confirm-email.dto';
 import { AuthUpdateDto } from './dto/auth-update.dto';
@@ -43,9 +48,12 @@ export class AuthController {
     return this.service.validateLogin(loginDto);
   }
 
+  @ApiCreatedResponse({
+    type: User,
+  })
   @Post('email/register')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async register(@Body() createUserDto: AuthRegisterLoginDto): Promise<void> {
+  @HttpCode(HttpStatus.CREATED)
+  async register(@Body() createUserDto: AuthRegisterLoginDto): Promise<User> {
     return this.service.register(createUserDto);
   }
 
