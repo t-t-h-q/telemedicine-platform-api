@@ -7,6 +7,7 @@ import { SessionModule } from './session/session.module';
 import { UsersModule } from './users/users.module';
 import { DoctorsModule } from './doctors/doctors.module';
 import { PatientsModule } from './patients/patients.module';
+import { AppointmentsModule } from './appointments/appointments.module';
 import appConfig from './config/app.config';
 import databaseConfig from './database/config/database.config';
 import authConfig from './auth/config/auth.config';
@@ -16,6 +17,7 @@ import { MongooseConfigService } from './database/mongoose-config.service';
 
 @Module({
   imports: [
+    AppointmentsModule,
     PatientsModule,
     ConfigModule.forRoot({
       isGlobal: true,
