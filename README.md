@@ -45,21 +45,17 @@
 
 3. **Configure environment variables**:
   Copy the .env.example file to .env and configure the necessary values:
-  cp .env.example .env
+  cp env-example .env
 
-4. **Change env config**:
-  Change DATABASE_URL=mongodb://mongo:27017 to DATABASE_URL=mongodb://localhost:27017
-  Change MAIL_HOST=maildev to MAIL_HOST=localhost
-  
-5. **Generate secret keys for access token and refresh token**
+4. **Generate secret keys for access token and refresh token**
 
     ```console
     node -e "console.log('\nAUTH_JWT_SECRET=' + require('crypto').randomBytes(256).toString('base64') + '\n\nAUTH_REFRESH_SECRET=' + require('crypto').randomBytes(256).toString('base64') + '\n\nAUTH_FORGOT_SECRET=' + require('crypto').randomBytes(256).toString('base64') + '\n\nAUTH_CONFIRM_EMAIL_SECRET=' + require('crypto').randomBytes(256).toString('base64'));"
     ```
 
-6. **Start MongoDB using Docker (if MongoDB is not installed locally)**:
+5. **Start MongoDB using Docker (if MongoDB is not installed locally)**:
   docker compose -f docker-compose.document.yaml up -d mongo mongo-express maildev
 
-7. **Run the project**:
+6. **Run the project**:
   pnpm run start:dev
   Open <http://localhost:3000>
